@@ -488,7 +488,7 @@ body.class-b .orb-2 {
 
 
 
-/* ---- CALENDAR REMINDER EXPORT ---- */
+/* ---- CALENDAR SUBSCRIPTION ---- */
 .calendar-reminder-section {
   position: relative; z-index: 1;
   max-width: 1100px; margin: 0 auto;
@@ -547,3 +547,20 @@ body.class-b .orb-2 {
   .calendar-reminder-actions { width: 100%; }
   .calendar-export-btn { flex: 1 1 100%; }
 }
+
+
+.calendar-subscription-help {
+  flex: 1 1 100%;
+  width: 100%;
+  margin-top: 8px;
+  padding: 14px 16px;
+  border: 1px solid rgba(127, 145, 180, 0.24);
+  border-radius: 14px;
+  background: rgba(127, 145, 180, 0.07);
+  color: var(--text-secondary, inherit);
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+.calendar-subscription-help p { margin: 0 0 9px; }
+.calendar-subscription-help p:last-child { margin-bottom: 0; }
+.calendar-subscription-help strong { color: var(--text-primary, inherit); }

@@ -235,146 +235,63 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
-  /* ── Export schedule to .ics calendar with 30-minute reminder ── */
+  /* ── Calendar subscription ──
+     Set the permanent feed URL after deploying the PHP calendar endpoint.
+     Example: https://your-domain.infinityfreeapp.com/calendar.php?class=
+  */
   const calendarStatus = document.getElementById('calendar-reminder-status');
+  const subscribeButton = document.getElementById('calendar-subscribe-btn');
+  const howtoButton = document.getElementById('calendar-howto-btn');
+  const subscriptionHelp = document.getElementById('calendar-subscription-help');
 
-  function escapeICS(value) {
-    return String(value || '')
-      .replace(/\\/g, '\\\\')
-      .replace(/\n/g, '\\n')
-      .replace(/,/g, '\\,')
-      .replace(/;/g, '\\;');
+  // Replace this value with the public HTTPS URL of the deployed calendar.php endpoint.
+  // Keep the trailing "=" so the active class letter can be appended.
+  const CALENDAR_FEED_BASE_URL = 'https://YOUR-INFINITYFREE-DOMAIN/calendar.php?class=';
+
+  function isFeedConfigured() {
+    return !CALENDAR_FEED_BASE_URL.includes('YOUR-INFINITYFREE-DOMAIN')
+      && /^https:\/\//i.test(CALENDAR_FEED_BASE_URL);
   }
 
-  function formatICSDate(date) {
-    return date.getFullYear()
-      + String(date.getMonth() + 1).padStart(2, '0')
-      + String(date.getDate()).padStart(2, '0')
-      + 'T' + String(date.getHours()).padStart(2, '0')
-      + String(date.getMinutes()).padStart(2, '0')
-      + '00';
+  function updateSubscriptionButton() {
+    if (subscribeButton) {
+      subscribeButton.innerHTML =
+        `<span aria-hidden="true">▦</span> Salin URL Langganan Kelas ${activeClass}`;
+    }
+    if (calendarStatus && !isFeedConfigured()) {
+      calendarStatus.textContent =
+        `Kelas ${activeClass} dipilih. URL langganan akan aktif setelah alamat domain dan endpoint kalender di server dikonfigurasi.`;
+    }
   }
 
-  function parseTimeRange(text) {
-    const match = text.match(/(\d{1,2})[.:](\d{2})\s*[–-]\s*(\d{1,2})[.:](\d{2})/);
-    if (!match) return null;
-    return {
-      startHour: Number(match[1]), startMinute: Number(match[2]),
-      endHour: Number(match[3]), endMinute: Number(match[4])
-    };
-  }
+  if (subscribeButton) {
+    subscribeButton.addEventListener('click', async () => {
+      if (!isFeedConfigured()) {
+        calendarStatus.textContent =
+          'URL belum aktif. Deploy endpoint calendar.php ke hosting terlebih dahulu, lalu masukkan alamatnya ke CALENDAR_FEED_BASE_URL di script.js.';
+        return;
+      }
 
-  function localDateAt(dayOffset, hour, minute) {
-    const date = new Date();
-    date.setHours(0, 0, 0, 0);
-    date.setDate(date.getDate() + dayOffset);
-    date.setHours(hour, minute, 0, 0);
-    return date;
-  }
-
-  function downloadCalendar(daysAhead) {
-    const activeSchedule = activeClass === 'A' ? scheduleA : scheduleB;
-    const classLabel = activeClass;
-    const dayNames = {
-      senin: 1, selasa: 2, rabu: 3, kamis: 4,
-      jumat: 5, sabtu: 6, minggu: 0
-    };
-    const courses = [];
-
-    activeSchedule.querySelectorAll('.day-block').forEach(block => {
-      const dayKey = block.dataset.day;
-      const targetDay = dayNames[dayKey];
-      if (targetDay === undefined) return;
-
-      block.querySelectorAll('.session-card').forEach(card => {
-        const timeText = card.querySelector('.time-range')?.textContent.trim() || '';
-        const parsed = parseTimeRange(timeText);
-        const title = card.querySelector('.matkul-name')?.childNodes[0]?.textContent.trim()
-          || card.querySelector('.matkul-name')?.textContent.trim()
-          || 'Mata Kuliah';
-        const lecturer = card.querySelector('.dosen-name')?.textContent.trim() || '';
-        const room = card.querySelector('.room-tag')?.textContent.trim() || '';
-        if (parsed) courses.push({ targetDay, title, lecturer, room, ...parsed });
-      });
+      const feedUrl = `${CALENDAR_FEED_BASE_URL}${activeClass}`;
+      try {
+        await navigator.clipboard.writeText(feedUrl);
+        calendarStatus.textContent =
+          `URL langganan Kelas ${activeClass} berhasil disalin. Tempelkan URL ini pada fitur berlangganan kalender di aplikasi kalender.`;
+      } catch (error) {
+        calendarStatus.textContent = `Salin URL berikut secara manual: ${feedUrl}`;
+      }
     });
-
-    if (!courses.length) {
-      calendarStatus.textContent = 'Jadwal tidak ditemukan. Pastikan data jadwal tersedia di halaman.';
-      return;
-    }
-
-    const now = new Date();
-    const endDate = new Date(now);
-    endDate.setDate(endDate.getDate() + daysAhead);
-    const events = [];
-
-    // Export each occurrence within the requested range; skip sessions already started today.
-    for (let offset = 0; offset < daysAhead; offset++) {
-      const date = new Date(now);
-      date.setHours(0, 0, 0, 0);
-      date.setDate(date.getDate() + offset);
-      if (date >= endDate) continue;
-
-      courses.forEach(course => {
-        if (date.getDay() !== course.targetDay) return;
-        const start = localDateAt(offset, course.startHour, course.startMinute);
-        const end = localDateAt(offset, course.endHour, course.endMinute);
-        if (start <= now) return;
-
-        const uid = `${classLabel}-${date.getFullYear()}${date.getMonth()+1}${date.getDate()}-${course.title}`
-          .replace(/[^a-zA-Z0-9-]/g, '-') + '@jadwal-sti2627';
-        events.push([
-          'BEGIN:VEVENT',
-          `UID:${escapeICS(uid)}`,
-          `DTSTAMP:${formatICSDate(new Date())}Z`,
-          `DTSTART:${formatICSDate(start)}`,
-          `DTEND:${formatICSDate(end)}`,
-          `SUMMARY:${escapeICS(`[Kelas ${classLabel}] ${course.title}`)}`,
-          `DESCRIPTION:${escapeICS(`Kelas ${classLabel}\\nDosen: ${course.lecturer}\\nRuang: ${course.room}`)}`,
-          `LOCATION:${escapeICS(course.room)}`,
-          'BEGIN:VALARM',
-          'TRIGGER:-PT30M',
-          'ACTION:DISPLAY',
-          `DESCRIPTION:${escapeICS(`30 menit lagi: ${course.title}`)}`,
-          'END:VALARM',
-          'END:VEVENT'
-        ].join('\r\n'));
-      });
-    }
-
-    if (!events.length) {
-      calendarStatus.textContent = 'Tidak ada jadwal mendatang untuk kelas ini dalam rentang yang dipilih.';
-      return;
-    }
-
-    const calendar = [
-      'BEGIN:VCALENDAR',
-      'VERSION:2.0',
-      'PRODID:-//Jadwal STI//Pengingat Kuliah//ID',
-      'CALSCALE:GREGORIAN',
-      'METHOD:PUBLISH',
-      'X-WR-CALNAME:' + escapeICS(`Jadwal STI - Kelas ${classLabel}`),
-      'X-WR-TIMEZONE:Asia/Jakarta',
-      ...events,
-      'END:VCALENDAR'
-    ].join('\r\n') + '\r\n';
-
-    const blob = new Blob([calendar], { type: 'text/calendar;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `jadwal-sti-kelas-${classLabel}-${daysAhead}-hari.ics`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1500);
-
-    calendarStatus.textContent =
-      `${events.length} acara berhasil disiapkan untuk Kelas ${classLabel}. Buka file .ics yang diunduh, lalu tambahkan ke aplikasi kalender. Pengingat disetel 30 menit sebelum kelas.`;
   }
 
-  document.querySelectorAll('.calendar-export-btn').forEach(button => {
-    button.addEventListener('click', () => downloadCalendar(Number(button.dataset.calendarDays)));
-  });
+  if (howtoButton && subscriptionHelp) {
+    howtoButton.addEventListener('click', () => {
+      subscriptionHelp.hidden = !subscriptionHelp.hidden;
+      howtoButton.textContent = subscriptionHelp.hidden
+        ? 'Cara Berlangganan'
+        : 'Sembunyikan Panduan';
+    });
+  }
+
+  updateSubscriptionButton();
 
 });

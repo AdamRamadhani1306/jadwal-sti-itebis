@@ -90,23 +90,28 @@
   </div>
 
 
-  <!-- CALENDAR REMINDERS -->
+  <!-- CALENDAR SUBSCRIPTION -->
   <section class="calendar-reminder-section" aria-labelledby="calendar-reminder-title">
     <div class="calendar-reminder-card">
       <div class="calendar-reminder-copy">
         <span class="calendar-reminder-eyebrow">STI CALENDAR</span>
-        <h2 id="calendar-reminder-title">Pengingat Jadwal Kuliah</h2>
-        <p>Ekspor jadwal kelas yang dipilih ke aplikasi kalender perangkatmu. Setiap acara dilengkapi pengingat 30 menit sebelum kelas dimulai.</p>
+        <h2 id="calendar-reminder-title">Langganan Kalender Kuliah</h2>
+        <p>Tambahkan kalender kelasmu satu kali ke aplikasi kalender. Saat jadwal diperbarui di server, perubahan dapat tersinkronisasi otomatis ketika aplikasi kalender melakukan pembaruan.</p>
       </div>
       <div class="calendar-reminder-actions">
-        <button type="button" class="calendar-export-btn calendar-export-primary" data-calendar-days="7">
-          <span aria-hidden="true">▦</span> Ingatkan untuk 1 Minggu
+        <button type="button" class="calendar-export-btn calendar-export-primary" id="calendar-subscribe-btn">
+          <span aria-hidden="true">▦</span> Salin URL Langganan Kelas A
         </button>
-        <button type="button" class="calendar-export-btn" data-calendar-days="30">
-          <span aria-hidden="true">▣</span> Ingatkan untuk 1 Bulan
+        <button type="button" class="calendar-export-btn" id="calendar-howto-btn">
+          Cara Berlangganan
         </button>
       </div>
-      <p class="calendar-reminder-note" id="calendar-reminder-status" role="status" aria-live="polite">Kelas yang aktif dipilih akan digunakan untuk membuat kalender.</p>
+      <p class="calendar-reminder-note" id="calendar-reminder-status" role="status" aria-live="polite">Pilih Kelas A atau Kelas B di atas. URL langganan akan tersedia setelah endpoint kalender dipasang di server.</p>
+      <div class="calendar-subscription-help" id="calendar-subscription-help" hidden>
+        <p><strong>iPhone (Apple Calendar):</strong> buka Pengaturan Kalender atau tautan langganan, lalu tambahkan kalender melalui URL langganan.</p>
+        <p><strong>Android (Google Calendar):</strong> biasanya perlu menambahkan kalender melalui Google Calendar versi web pada bagian kalender lain menggunakan URL kalender. Setelah ditambahkan, kalender akan tampil di perangkat yang memakai akun Google tersebut.</p>
+        <p><strong>Catatan:</strong> pembaruan kalender berlangganan tidak selalu langsung muncul. Waktu sinkronisasi ditentukan oleh aplikasi kalender. Alarm 30 menit sebelum kelas juga bergantung pada dukungan aplikasi kalender terhadap pengingat dari kalender berlangganan.</p>
+      </div>
     </div>
   </section>
 
